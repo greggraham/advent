@@ -16,7 +16,11 @@ func main() {
 	}
 
 	scanner := bufio.NewScanner(file)
-	part2(scanner)
+	if len(os.Args) == 2 && os.Args[1] == "2" {
+		part2(scanner)
+	} else {
+		part1(scanner)
+	}
 	err = file.Close()
 	if err != nil {
 		log.Fatal(err)
