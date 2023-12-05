@@ -126,24 +126,27 @@ func part2(scanner *bufio.Scanner) {
 	starRe := regexp.MustCompile(`[*]`)
 	for lineNum := 1; lineNum < len(lines)-1; lineNum++ {
 		line := lines[lineNum]
-		stars := starRe.FindAllStringIndex(line, -1)
-		for _, starIndex := range stars {
+		starLocs := starRe.FindAllStringIndex(line, -1)
+		fmt.Println(starLocs)
+		for _, starLoc := range starLocs {
+			sl := starLoc[0]
 			var parts []int
 			for ln := lineNum - 1; ln <= lineNum+1; ln++ {
 				for _, numLoc := range numLocs[ln] {
-					if starIndex[0] >= numLoc[0]-1 && starIndex[0] <= numLoc[1] {
-						partNum, err := strconv.Atoi(line[numLoc[0]:numLoc[1]])
+					if sl >= numLoc[0]-1 && sl <= numLoc[1] {
+						partNum, err := strconv.Atoi(lines[ln][numLoc[0]:numLoc[1]])
 						if err != nil {
 							log.Fatal(err)
 						}
 						parts = append(parts, partNum)
+						fmt.Printf("Found part %d\n", partNum)
 					}
 				}
 			}
-			if len(parts) > 1 {
-				for gear := range parts {
-					sum += gear
-				}
+			if len(parts) == 2 {
+				ratio := parts[0] * parts[1]
+				sum += ratio
+				fmt.Println("Gear: ", parts, ratio, sum)
 			}
 		}
 	}
