@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 func main() {
@@ -29,18 +31,121 @@ func main() {
 }
 
 func part1(scanner *bufio.Scanner) {
+	// Locate symbols
 	var symbols [][]int
-	lineNum := 0
+	var lines []string
 	symRe := regexp.MustCompile(`[^.0-9]`)
 	for scanner.Scan() {
 		line := scanner.Text()
-		symbols = append(symbols, symRe.FindAllStringIndex(line, -1)[0])
+		lines = append(lines, line)
+		symIndices := symRe.FindAllStringIndex(line, -1)
+		var thisLineSym []int
+		for _, elem := range symIndices {
+			thisLineSym = append(thisLineSym, elem[0])
+		}
+		symbols = append(symbols, thisLineSym)
 	}
-	for scanner.Scan() {
-		line := scanner.Text()
 
+	// Find part numbers
+	numRe := regexp.MustCompile(`\d+`)
+	sum := 0
+	for lineNum, line := range lines {
+		numbers := numRe.FindAllString(line, -1)
+		indices := numRe.FindAllStringIndex(line, -1)
+
+		// Loop through the indices of each number in the current line
+		for i, pos := range indices {
+			skip := false
+			// Check for symbols on the line above
+			if lineNum > 0 {
+				for _, si := range symbols[lineNum-1] {
+					if si >= pos[0]-1 && si <= pos[1] {
+						num, err := strconv.Atoi(numbers[i])
+						if err != nil {
+							log.Fatal(err)
+						}
+						sum += num
+						skip = true
+						break
+					}
+				}
+			}
+			if skip {
+				continue
+			}
+
+			// Check for symbols on the current line
+			for _, si := range symbols[lineNum] {
+				if si >= pos[0]-1 && si <= pos[1] {
+					num, err := strconv.Atoi(numbers[i])
+					if err != nil {
+						log.Fatal(err)
+					}
+					sum += num
+					skip = true
+					break
+				}
+			}
+			if skip {
+				continue
+			}
+
+			// Check for symbols on the next line
+			if lineNum+1 < len(symbols) {
+				for _, si := range symbols[lineNum+1] {
+					if si >= pos[0]-1 && si <= pos[1] {
+						num, err := strconv.Atoi(numbers[i])
+						if err != nil {
+							log.Fatal(err)
+						}
+						sum += num
+						skip = true
+						break
+					}
+				}
+			}
+		}
 	}
+	fmt.Println(sum)
 }
 
 func part2(scanner *bufio.Scanner) {
+	sum := 0
+
+	// Locate numLocs
+	var numLocs [][][]int
+	var lines []string
+	numRe := regexp.MustCompile(`\d+`)
+	for scanner.Scan() {
+		line := scanner.Text()
+		lines = append(lines, line)
+		numLocs = append(numLocs, numRe.FindAllStringIndex(line, -1))
+	}
+
+	// Find gears
+	starRe := regexp.MustCompile(`[*]`)
+	for lineNum := 1; lineNum < len(lines)-1; lineNum++ {
+		line := lines[lineNum]
+		stars := starRe.FindAllStringIndex(line, -1)
+		for _, starIndex := range stars {
+			var parts []int
+			for ln := lineNum - 1; ln <= lineNum+1; ln++ {
+				for _, numLoc := range numLocs[ln] {
+					if starIndex[0] >= numLoc[0]-1 && starIndex[0] <= numLoc[1] {
+						partNum, err := strconv.Atoi(line[numLoc[0]:numLoc[1]])
+						if err != nil {
+							log.Fatal(err)
+						}
+						parts = append(parts, partNum)
+					}
+				}
+			}
+			if len(parts) > 1 {
+				for gear := range parts {
+					sum += gear
+				}
+			}
+		}
+	}
+	fmt.Println(sum)
 }
