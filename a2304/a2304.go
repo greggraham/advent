@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -32,20 +33,19 @@ func main() {
 }
 
 func part1(scanner *bufio.Scanner) {
+	numBarRe := regexp.MustCompile(`(Card +\d+:)|\d+|[|]`)
 	sum := 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		fmt.Println(line)
-		winning, yours := getNumbers(line)
+		winning, yours := getNumbers(line, numBarRe)
 		sum += scorePoints(winning, yours)
 	}
 	fmt.Println(sum)
 }
 
-func getNumbers(line string) (winning map[int]struct{}, yours []int) {
+func getNumbers(line string, numBarRe *regexp.Regexp) (winning map[int]struct{}, yours []int) {
 	winning = make(map[int]struct{})
 	endOfWinning := false
-	numBarRe := regexp.MustCompile(`(Card +\d+:)|\d+|[|]`)
 	res := numBarRe.FindAllString(line, -1)
 	for _, token := range res {
 		if token == "|" {
@@ -79,15 +79,49 @@ func scorePoints(winning map[int]struct{}, yours []int) int {
 			}
 		}
 	}
-	fmt.Println(winning, yours, points)
 	return points
 }
 
+func countWins(winning map[int]struct{}, yours []int) int {
+	wins := 0
+	for _, num := range yours {
+		_, ok := winning[num]
+		if ok {
+			wins++
+		}
+	}
+	return wins
+}
+
+type CardRec struct {
+	CardNum int
+	Wins    int
+	Copies  int
+}
+
 func part2(scanner *bufio.Scanner) {
-	sum := 0
+	numBarRe := regexp.MustCompile(`(Card +\d+:)|\d+|[|]`)
+	var wins []int
+	var cards []int
+	cardNum := 1
 	for scanner.Scan() {
 		line := scanner.Text()
-		fmt.Println(line)
+		winning, yours := getNumbers(line, numBarRe)
+		wins = append(wins, countWins(winning, yours))
+		cards = append(cards, cardNum)
+		cardNum++
 	}
-	fmt.Println(sum)
+	maxCardNum := cardNum - 1
+
+	for i := 0; i < len(cards); i++ {
+		cardNum = cards[i]
+		w := wins[cardNum-1]
+		fmt.Printf("Card %d Wins %d Length %d\n", cardNum, w, len(cards))
+		for j := 1; j <= w && cardNum+j <= maxCardNum; j++ {
+			cards = append(cards, cardNum+j)
+		}
+		sort.Ints(cards)
+	}
+
+	fmt.Println(len(cards))
 }
