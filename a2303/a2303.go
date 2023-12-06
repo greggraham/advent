@@ -112,7 +112,7 @@ func part1(scanner *bufio.Scanner) {
 func part2(scanner *bufio.Scanner) {
 	sum := 0
 
-	// Locate numLocs
+	// Locate numbers
 	var numLocs [][][]int
 	var lines []string
 	numRe := regexp.MustCompile(`\d+`)
